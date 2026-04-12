@@ -1,1 +1,2 @@
-datasets/dataset_a/images
+datasets/dataset_a/images/
+.DS_Store
