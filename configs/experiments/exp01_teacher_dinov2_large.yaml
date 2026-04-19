@@ -1,0 +1,48 @@
+# Experiment 01: DinoV2-Large teacher, cross-domain ArcFace
+exp_id: exp01_teacher_dinov2_large
+seed: 42
+device: auto
+save_dir: checkpoints
+
+backbone:
+  name: vit_large_patch14_reg4_dinov2.lvd142m
+  pretrained: true
+  kwargs:
+    img_size: 224
+    dynamic_img_size: true
+
+head:
+  embedding_dim: 512
+
+data:
+  image_size: 224
+  val_fraction: 0.05
+  max_samples: null
+  sources:
+    - root: datasets/dataset_a
+      parquet: our_train.parquet
+      identity_offset: 0
+    - root: datasets/market1501
+      parquet: market1501_train.parquet
+      identity_offset: 0  # market parquet already offset at prep time
+
+train:
+  batch_size: 48   # DinoV2-L is big; drop if OOM on T4 (try 32)
+  num_workers: 4
+  epochs: 20
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  warmup_epochs: 2
+  grad_clip: 1.0
+  loss: arcface
+  arcface_s: 30.0
+  arcface_m: 0.35
+  amp: true
+  compile: true
+
+early_stop:
+  patience: 3
+  val_every_epochs: 1
+
+distillation:
+  enabled: false

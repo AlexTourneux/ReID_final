@@ -1,2 +1,8 @@
 datasets/dataset_a/images/
 .DS_Store
+
+# Training artifacts — too large / regenerable
+checkpoints/
+predictions/
+results/
+__pycache__/

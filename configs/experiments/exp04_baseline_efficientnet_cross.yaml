@@ -1,0 +1,45 @@
+# Experiment 04: EfficientNet-B0 cross-domain baseline (no KD)
+exp_id: exp04_baseline_efficientnet_cross
+seed: 42
+device: auto
+save_dir: checkpoints
+
+backbone:
+  name: efficientnet_b0
+  pretrained: true
+
+head:
+  embedding_dim: 512
+
+data:
+  image_size: 224
+  val_fraction: 0.05
+  max_samples: null
+  sources:
+    - root: datasets/dataset_a
+      parquet: our_train.parquet
+      identity_offset: 0
+    - root: datasets/market1501
+      parquet: market1501_train.parquet
+      identity_offset: 0
+
+train:
+  batch_size: 192
+  num_workers: 4
+  epochs: 25
+  lr: 4.0e-4
+  weight_decay: 1.0e-4
+  warmup_epochs: 2
+  grad_clip: 1.0
+  loss: arcface
+  arcface_s: 30.0
+  arcface_m: 0.5
+  amp: true
+  compile: true
+
+early_stop:
+  patience: 4
+  val_every_epochs: 1
+
+distillation:
+  enabled: false
