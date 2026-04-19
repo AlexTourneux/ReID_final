@@ -11,3 +11,6 @@ checkpoints/
 predictions/
 results/
 __pycache__/
+
+# Dataset zips (hosted on Drive, not GitHub)
+*.zip
