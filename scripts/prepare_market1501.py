@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pandas as pd
 
-FNAME_RE = re.compile(r"^(-?\d+)_c(\d+)s\d+_\d+_\d+\.jpg$")
+FNAME_RE = re.compile(r"^(-?\d+)_c(\d+)s\d+_\d+_\d+\.jpg(?:\.jpg)?$")
 
 
 def parse_split_dir(root: Path, subdir: str):

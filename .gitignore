@@ -1,4 +1,9 @@
 datasets/dataset_a/images/
+datasets/market1501/bounding_box_train/
+datasets/market1501/bounding_box_test/
+datasets/market1501/query/
+datasets/market1501/gt_bbox/
+datasets/market1501/gt_query/
 .DS_Store
 
 # Training artifacts — too large / regenerable
