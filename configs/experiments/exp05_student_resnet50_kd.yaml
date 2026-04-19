@@ -47,6 +47,7 @@ distillation:
   teacher_backbone_kwargs:
     img_size: 224
     dynamic_img_size: true
+    global_pool: token  # DinoV2 was pretrained with CLS-token pooling
   teacher_embedding_dim: 512
   teacher_checkpoint: checkpoints/exp01_teacher_dinov2_large/best.pth
   alpha: 1.0   # weight on (arcface + triplet + ...)

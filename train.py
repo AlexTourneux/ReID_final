@@ -231,8 +231,12 @@ class ReIDModel(nn.Module):
         super().__init__()
         import timm
         kwargs = dict(backbone_kwargs or {})
+        # DinoV2 ViTs were pretrained with CLS-token pooling; setting avg pool
+        # triggers a timm norm->fc_norm rename that breaks pretrained loading.
+        # Let configs override via kwargs; fall back to "avg" for CNN backbones.
+        kwargs.setdefault("global_pool", "avg")
         self.backbone = timm.create_model(
-            backbone_name, pretrained=pretrained, num_classes=0, global_pool="avg", **kwargs
+            backbone_name, pretrained=pretrained, num_classes=0, **kwargs
         )
         feat_dim = self.backbone.num_features
         self.head = nn.Sequential(
