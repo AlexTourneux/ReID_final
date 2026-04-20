@@ -23,10 +23,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from train import ReIDModel  # noqa: E402
 
 
-def load_checkpoint(path, device):
+def load_checkpoint(path, device, backbone_override=None, emb_dim_override=None):
     ckpt = torch.load(path, map_location=device, weights_only=True)
-    backbone = ckpt["backbone_name"]
-    emb_dim = ckpt.get("embedding_dim", 512)
+    backbone = backbone_override or ckpt.get("backbone_name")
+    if backbone is None:
+        raise ValueError(
+            f"Checkpoint has no backbone_name key (old format). "
+            "Pass --backbone resnet50 to specify it manually.")
+    emb_dim = emb_dim_override or ckpt.get("embedding_dim", 512)
     backbone_kwargs = ckpt.get("backbone_kwargs") or {}
     model = ReIDModel(backbone_name=backbone, embedding_dim=emb_dim,
                       pretrained=False, backbone_kwargs=backbone_kwargs).to(device)
@@ -57,6 +61,11 @@ def time_forward(model, device, batch_size, image_size, warmup, iters):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
+    ap.add_argument("--backbone", default=None,
+                    help="Override backbone name (needed for old-format checkpoints "
+                    "that lack a backbone_name key, e.g. --backbone resnet50)")
+    ap.add_argument("--embedding_dim", type=int, default=None,
+                    help="Override embedding dim (old-format checkpoints only)")
     ap.add_argument("--batch_size", type=int, default=64,
                     help="Batch size for throughput measurement")
     ap.add_argument("--image_size", type=int, default=224)
@@ -71,7 +80,8 @@ def main():
     else:
         device = torch.device(args.device)
 
-    model, backbone, emb_dim = load_checkpoint(args.checkpoint, device)
+    model, backbone, emb_dim = load_checkpoint(
+        args.checkpoint, device, args.backbone, args.embedding_dim)
 
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -95,15 +105,20 @@ def main():
 
     if device.type == "cuda":
         peak_mb = torch.cuda.max_memory_allocated(device) / (1024 * 1024)
-        print(f"Peak GPU memory:   {peak_mb:.1f} MB  (at bs={args.batch_size})")
+        print(f"Peak GPU memory:   {peak_mb:.1f} MB  (high-water mark, CUDA)")
+    elif device.type == "mps":
+        mem_mb = torch.mps.driver_allocated_memory() / (1024 * 1024)
+        print(f"GPU memory:        {mem_mb:.1f} MB  (MPS snapshot — not peak high-water mark)")
     else:
-        print("Peak memory:       (GPU only — run on CUDA for this number)")
+        print("Peak memory:       (GPU only — run on CUDA or MPS)")
 
     print()
     print("RESULTS.md cells:")
     print(f"  throughput: {thr:.0f} img/s")
     if device.type == "cuda":
-        print(f"  peak_mem:   {peak_mb:.0f} MB")
+        print(f"  peak_mem:   {peak_mb:.0f} MB  (CUDA peak)")
+    elif device.type == "mps":
+        print(f"  peak_mem:   {mem_mb:.0f} MB  (MPS snapshot, not true peak)")
     print(f"  params:     {total_params/1e6:.1f}M")
 
 
