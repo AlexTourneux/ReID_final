@@ -28,7 +28,7 @@ data:
       identity_offset: 0  # market parquet already offset at prep time
 
 train:
-  batch_size: 48   # DinoV2-L is big; drop if OOM on T4 (try 32)
+  batch_size: 24   # DinoV2-L on T4 (16GB): 48 OOMs, 24 fits with AMP+compile
   num_workers: 4
   epochs: 20
   lr: 3.0e-4
