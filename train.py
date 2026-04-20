@@ -356,7 +356,11 @@ def build_teacher(cfg: dict, device: torch.device) -> Optional[nn.Module]:
         backbone_kwargs=kd.get("teacher_backbone_kwargs"),
     ).to(device)
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
-    teacher.load_state_dict(ckpt["model_state_dict"])
+    # Checkpoints saved from a torch.compile()'d model carry an `_orig_mod.`
+    # prefix on every key. Strip it so we can load into a fresh (uncompiled)
+    # teacher.
+    state = {k.replace("_orig_mod.", ""): v for k, v in ckpt["model_state_dict"].items()}
+    teacher.load_state_dict(state)
     teacher.eval()
     for p in teacher.parameters():
         p.requires_grad_(False)
